@@ -1,4 +1,4 @@
-//I/O redirection handing-reverse video feature-read and print one page then pause for a few special commands ('q', ' ' , '\n')
+//Percentage of file contents displayed-I/O redirection handing-reverse video feature using control sequence introducer \033[-read and print one page then pause for a few special commands ('q', ' ' , '\n')
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,7 +6,8 @@
 #define	LINELEN	512
 
 void do_more(FILE *);
-int get_input(FILE*);
+int get_input(FILE*, int, int);
+int get_total_num_of_lines(FILE*);
 int main(int argc , char *argv[])
 {
 	int i=0;
@@ -25,10 +26,19 @@ int main(int argc , char *argv[])
    	}  
 	return 0;
 }
+int get_total_num_of_lines(FILE* fp)
+{
+	int n = 0;
+	char buffer[LINELEN];
+	while(fgets(buffer, LINELEN, fp))
+		n++;
+	return n;
+}
 void do_more(FILE *fp)
 {
    	int num_of_lines = 0;
    	int rv, n = 0;
+	int total_noOfLines = get_total_num_of_lines(fp);
 	fseek(fp, 0, SEEK_SET);
    	char buffer[LINELEN];
    	FILE* fp_tty = fopen("/dev//tty", "r");
@@ -37,7 +47,7 @@ void do_more(FILE *fp)
       		num_of_lines++;
       		n++;
 	      	if (num_of_lines == PAGELEN){
-		 	rv = get_input(fp_tty);		
+		 	rv = get_input(fp_tty, n, total_noOfLines);		
 		 	if (rv == 0) {//user pressed q
 		    		printf("\033[1A \033[2K \033[1G");
 		    		break;
@@ -57,10 +67,11 @@ void do_more(FILE *fp)
 	      	}
 	}
 }
-int get_input(FILE* cmdstream)
+int get_input(FILE* cmdstream, int num_of_lines, int total_noOfLines)
 {
    	int c;
-	printf("\033[7m --more--(%%) \033[m");
+	int percentage = (float)num_of_lines/(float)total_noOfLines*100;
+   	printf("\033[7m --more--(%d%) \033[m", percentage);
      	c = getc(cmdstream);
       	if(c == 'q')
 	 	return 0;
