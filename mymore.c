@@ -1,15 +1,24 @@
-//Percentage of file contents displayed-I/O redirection handing-reverse video feature using control sequence introducer \033[-read and print one page then pause for a few special commands ('q', ' ' , '\n')
+//Handle size of terminal-Percentage of file contents displayed-I/O redirection handing-reverse video feature using control sequence introducer \033[-read and print one page then pause for a few special commands ('q', ' ' , '\n')
 
 #include <stdio.h>
 #include <stdlib.h>
-#define	PAGELEN	20
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <signal.h>
+//#define PAGELEN 20
 #define	LINELEN	512
-
+int PAGELEN = 0;
 void do_more(FILE *);
 int get_input(FILE*, int, int);
 int get_total_num_of_lines(FILE*);
+void winch_handler(int);
 int main(int argc , char *argv[])
 {
+	struct winsize ts;
+	ioctl(STDIN_FILENO, TIOCGWINSZ, &ts);
+	signal(SIGWINCH, winch_handler);
+	PAGELEN = ts.ws_row - 1;
 	int i=0;
 	if (argc == 1){
 		do_more(stdin);
@@ -25,6 +34,12 @@ int main(int argc , char *argv[])
       	fclose(fp);
    	}  
 	return 0;
+}
+void winch_handler(int signo)
+{
+	struct winsize ts;
+	ioctl(STDIN_FILENO, TIOCGWINSZ, &ts);
+	PAGELEN = ts.ws_row - 1;
 }
 int get_total_num_of_lines(FILE* fp)
 {
@@ -71,7 +86,7 @@ int get_input(FILE* cmdstream, int num_of_lines, int total_noOfLines)
 {
    	int c;
 	int percentage = (float)num_of_lines/(float)total_noOfLines*100;
-   	printf("\033[7m --more--(%d%) \033[m", percentage);
+	printf("\033[7m --more--(%d%) \033[m", percentage);
      	c = getc(cmdstream);
       	if(c == 'q')
 	 	return 0;
