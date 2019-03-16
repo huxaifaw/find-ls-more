@@ -13,12 +13,17 @@ void do_more(FILE *);
 int get_input(FILE*, int, int);
 int get_total_num_of_lines(FILE*);
 void winch_handler(int);
+void set_input_mode(struct termios attr);
 int main(int argc , char *argv[])
 {
+	struct termios attr, saved_attr;
 	struct winsize ts;
-	ioctl(STDIN_FILENO, TIOCGWINSZ, &ts);
+	ioctl(0, TIOCGWINSZ, &ts);
 	signal(SIGWINCH, winch_handler);
 	PAGELEN = ts.ws_row - 1;
+	tcgetattr(0, &saved_attr);
+	attr = saved_attr;
+	set_input_mode(attr);
 	int i=0;
 	if (argc == 1){
 		do_more(stdin);
@@ -32,13 +37,21 @@ int main(int argc , char *argv[])
       		}
       	do_more(fp);
       	fclose(fp);
-   	}  
-	return 0;
+   	}
+      	tcsetattr(0, TCSANOW, &saved_attr);	
+	return EXIT_SUCCESS;
+}
+void set_input_mode (struct termios attr)
+{
+	attr.c_lflag = attr.c_lflag & ~(ICANON|ECHO);
+  	attr.c_cc[VMIN] = 1;
+  	attr.c_cc[VTIME] = 0;
+  	tcsetattr(0, TCSANOW, &attr);
 }
 void winch_handler(int signo)
 {
 	struct winsize ts;
-	ioctl(STDIN_FILENO, TIOCGWINSZ, &ts);
+	ioctl(0, TIOCGWINSZ, &ts);
 	PAGELEN = ts.ws_row - 1;
 }
 int get_total_num_of_lines(FILE* fp)
@@ -64,19 +77,19 @@ void do_more(FILE *fp)
 	      	if (num_of_lines == PAGELEN){
 		 	rv = get_input(fp_tty, n, total_noOfLines);		
 		 	if (rv == 0) {//user pressed q
-		    		printf("\033[1A \033[2K \033[1G");
+		    		printf("\033[2K \033[1G");
 		    		break;
 		 	}
 		 	else if (rv == 1) {//user pressed space bar
-		    		printf("\033[1A \033[2K \033[1G");
+		    		printf("\033[2K \033[1G");
 		    		num_of_lines -= PAGELEN;
 		 	}
 		 	else if (rv == 2) {//user pressed return/enter
-		    		printf("\033[1A \033[2K \033[1G");
+		    		printf("\033[2K \033[1G");
 			 	num_of_lines -= 1; //show one more line
 		 	}
 		 	else if (rv == 3) {//invalid character
-		    		printf("\033[1A \033[2K \033[1G");
+		    		printf("\033[2K \033[1G");
 		    		break; 
 		 	}
 	      	}
@@ -86,9 +99,9 @@ int get_input(FILE* cmdstream, int num_of_lines, int total_noOfLines)
 {
    	int c;
 	int percentage = (float)num_of_lines/(float)total_noOfLines*100;
-	printf("\033[7m --more--(%d%) \033[m", percentage);
-     	c = getc(cmdstream);
-      	if(c == 'q')
+	printf("\033[7m --more--(%d%) \033[m", percentage);	
+	c = getc(cmdstream);
+	if(c == 'q')
 	 	return 0;
       	if ( c == ' ' )			
 	 	return 1;
