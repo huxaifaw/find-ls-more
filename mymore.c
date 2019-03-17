@@ -1,4 +1,4 @@
-//Open a file in vim-Handle non canonical and non echo mode-Handle size of terminal-Percentage of file contents displayed-I/O redirection handing-reverse video feature using control sequence introducer \033[-read and print one page then pause for a few special commands ('q', ' ' , '\n')
+//Search a string-Open a file in vim-Handle non canonical and non echo mode-Handle size of terminal-Percentage of file contents displayed-I/O redirection handing-reverse video feature using control sequence introducer \033[-read and print one page then pause for a few special commands ('q', ' ' , '\n')
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,15 +13,15 @@
 #define	LINELEN	512
 int PAGELEN = 0;
 void do_more(FILE*);
-void mygrep(FILE*, char*);
+void search(FILE*);
 int get_input(FILE*, int, int);
 int get_total_num_of_lines(FILE*);
 void winch_handler(int);
 void set_input_mode(struct termios attr);
 char* filename[5];
+struct termios attr, saved_attr;
 int main(int argc , char *argv[])
 {
-	struct termios attr, saved_attr;
 	struct winsize ts;
 	ioctl(0, TIOCGWINSZ, &ts);
 	signal(SIGWINCH, winch_handler);
@@ -102,7 +102,12 @@ void do_more(FILE *fp)
 		    		break; 
 		 	}
 			else if(rv == 4) { //search a given string
-				printf("\033[1A \033[2K \033[1G");
+				tcsetattr(0, TCSANOW, &saved_attr);
+				search(fp);
+				tcgetattr(0, &saved_attr);
+				attr = saved_attr;
+				set_input_mode(attr);
+
 			}
 			else if(rv == 5) { //open file in vim editor
 				pid_t pid = fork();
@@ -137,25 +142,25 @@ int get_input(FILE* cmdstream, int num_of_lines, int total_noOfLines)
 		return 5;	
       	return 3;
 }
-void mygrep(FILE* fp, char* str)
+void search(FILE* fp)
 {
-	char c1[100], c2[100];
-	while(fgets(c1, 100, fp))
-	{
-		char* temp;
-		int i = 0;
-		strncpy(c2, c1, 100);
-		temp = strtok(c1, " ");
-		while(temp)
+	char str[LINELEN];
+	int chars_read = 0;
+	int prev_offset = 0;
+	char buffer[LINELEN];
+	fgets(str, LINELEN, stdin);
+	while(fgets(buffer, LINELEN, fp)) {
+		chars_read = strlen(buffer);
+		prev_offset += chars_read;
+		if(strstr(buffer, str))
 		{
-			if(!strcmp(temp, str))
-			{
-				fputs(c2, stdout);
-				printf("/n");
-				break;
-			}
-			temp = strtok(NULL, " ");
-
+			printf("\033[1;2H \033[2J");
+			printf("skipping...\n");
+			fseek(fp, chars_read*(-1), SEEK_CUR);
+			return;
 		}
 	}
+	fseek(fp, prev_offset*(-1), SEEK_CUR);
+	printf("\033[2K \033[1G \033[7m Pattern not found \033[m");
+	return;
 }
