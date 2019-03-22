@@ -101,12 +101,14 @@ void do_more(FILE *fp)
 		    		printf("\033[2K \033[1G");
 		    		break; 
 		 	}
-			else if(rv == 4) { //search a given string
+			else if(rv == 4)
+		       	{ //search a given string
 				tcsetattr(0, TCSANOW, &saved_attr);
 				search(fp);
 				tcgetattr(0, &saved_attr);
 				attr = saved_attr;
 				set_input_mode(attr);
+				num_of_lines-=PAGELEN -1;
 
 			}
 			else if(rv == 5) { //open file in vim editor
@@ -136,22 +138,24 @@ int get_input(FILE* cmdstream, int num_of_lines, int total_noOfLines)
 	 	return 1;
       	if ( c == '\n' )	
 	 	return 2;
-	if ( c == '/' )
+	if ( c == '/' ){
+		printf("\n/");
 		return 4;
+	}
 	if ( c == 'v' )
-		return 5;	
+		return 5;
       	return 3;
 }
 void search(FILE* fp)
 {
 	char str[LINELEN];
 	int chars_read = 0;
-	int prev_offset = 0;
+	int prev_offset = fseek(fp, 0, SEEK_CUR);
 	char buffer[LINELEN];
 	fgets(str, LINELEN, stdin);
 	while(fgets(buffer, LINELEN, fp)) {
 		chars_read = strlen(buffer);
-		prev_offset += chars_read;
+		//prev_offset += chars_read;
 		if(strstr(buffer, str))
 		{
 			printf("\033[1;2H \033[2J");
@@ -160,7 +164,8 @@ void search(FILE* fp)
 			return;
 		}
 	}
-	fseek(fp, prev_offset*(-1), SEEK_CUR);
+	fseek(fp, prev_offset, SEEK_SET);
 	printf("\033[2K \033[1G \033[7m Pattern not found \033[m");
+	printf("\n");
 	return;
 }
