@@ -15,6 +15,8 @@ char* uidToUname(int);
 char* gidToGname(int);
 int cstring_cmp(const void*, const void*);
 char* typesAndPermissions(int);
+int total_block_size = 0;
+void display_stat_info(char*, char*);
 int main(int argc, char* argv[])
 {
 	if(argc==1)
@@ -68,8 +70,13 @@ void do_ls(char* dir)
 		}
 	}
 	qsort(names, numOfNames, sizeof(char*), cstring_cmp);
-	for(int j = 0; j<numOfNames; j++)
-		printf("%s\n", names[j]);
+	for(int j = 0; j<numOfNames; j++) {
+		char path[500];
+		strcpy(path, dir);
+		strcat(path, "/");
+		strcat(path, names[j]);
+		display_stat_info(path, names[j]);
+	}
    	closedir(dp);
 }
 char* uidToUname(int uid)
@@ -149,4 +156,25 @@ char* typesAndPermissions(int mode)
 	if((mode & 0001000) == 0001000)
 		str[9]='t';	
 	return str;
+}
+void display_stat_info(char* path, char* fname)
+{
+	struct stat info;
+	int rv = lstat(path, &info);
+	if(rv == -1)
+	{
+		perror("stat failed");
+		exit(1);
+	}
+	char* mode = typesAndPermissions(info.st_mode);
+	total_block_size += info.st_blocks;
+	printf("%s\t", mode);
+	printf("%ld\t", info.st_nlink);
+	char* uName = uidToUname(info.st_uid);
+	printf("%s\t", uName);
+	char* gName = gidToGname(info.st_gid);
+	printf("%s\t", gName);
+	printf("%ld\t", info.st_size);
+	printf("%s\t", ctime(&info.st_mtime));
+	printf("%s\n",fname);
 }
