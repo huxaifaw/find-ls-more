@@ -13,7 +13,7 @@
 #define	LINELEN	512
 int PAGELEN = 0;
 void do_more(FILE*);
-void search(FILE*);
+int search(FILE*);
 int get_input(FILE*);
 void get_total_num_of_lines(FILE*);
 void winch_handler(int);
@@ -105,7 +105,10 @@ void do_more(FILE *fp)
 			else if(rv == 4)
 		       	{ //search a given string
 				tcsetattr(0, TCSANOW, &saved_attr);
-				search(fp);
+				int temp = n;
+				if(search(fp) == 0) {
+					n = temp;
+				}
 				tcgetattr(0, &saved_attr);
 				attr = saved_attr;
 				set_input_mode(attr);
@@ -148,13 +151,12 @@ int get_input(FILE* cmdstream)
 		return 5;
       	return 3;
 }
-void search(FILE* fp)
+int search(FILE* fp)
 {
 	char str[LINELEN];
 	int chars_read = 0;
-	int prev_offset = fseek(fp, 0, SEEK_CUR);
+	int prev_offset = ftell(fp);
 	char buffer[LINELEN];
-	int temp = n;
 	fgets(str, LINELEN, stdin);
 	while(fgets(buffer, LINELEN, fp)) {
 		chars_read = strlen(buffer);
@@ -165,12 +167,11 @@ void search(FILE* fp)
 			printf("\033[1;2H \033[2J");
 			printf("skipping...\n");
 			fseek(fp, chars_read*(-1), SEEK_CUR);
-			return;
+			return 1;
 		}
 	}
-	n = temp;
 	fseek(fp, prev_offset, SEEK_SET);
-	printf("\033[2K \033[1G \033[7m Pattern not found \033[m");
+	printf("\033[7m Pattern not found \033[m");
 	printf("\n");
-	return;
+	return 0;
 }
