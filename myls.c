@@ -77,6 +77,8 @@ void do_ls(char* dir)
 		strcat(path, names[j]);
 		display_stat_info(path, names[j]);
 	}
+
+	printf("total %d\n", total_block_size/2);
    	closedir(dp);
 }
 char* uidToUname(int uid)
