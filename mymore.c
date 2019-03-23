@@ -14,12 +14,13 @@
 int PAGELEN = 0;
 void do_more(FILE*);
 void search(FILE*);
-int get_input(FILE*, int, int);
-int get_total_num_of_lines(FILE*);
+int get_input(FILE*);
+void get_total_num_of_lines(FILE*);
 void winch_handler(int);
 void set_input_mode(struct termios attr);
 char* filename[5];
 struct termios attr, saved_attr;
+int n = 0, total_noOfLines = 0;
 int main(int argc , char *argv[])
 {
 	struct winsize ts;
@@ -62,20 +63,20 @@ void winch_handler(int signo)
 	ioctl(0, TIOCGWINSZ, &ts);
 	PAGELEN = ts.ws_row - 1;
 }
-int get_total_num_of_lines(FILE* fp)
+void get_total_num_of_lines(FILE* fp)
 {
-	int n = 0;
 	char buffer[LINELEN];
 	while(fgets(buffer, LINELEN, fp))
-		n++;
-	return n;
+		total_noOfLines++;
 }
 void do_more(FILE *fp)
 {
+	n = 0;	
 	int num_of_lines = 0;
-   	int rv, n = 0;
+   	total_noOfLines = 0;
+	int rv;
 	char str[20];
-	int total_noOfLines = get_total_num_of_lines(fp);
+	get_total_num_of_lines(fp);
 	fseek(fp, 0, SEEK_SET);
    	char buffer[LINELEN];
    	FILE* fp_tty = fopen("/dev//tty", "r");
@@ -84,7 +85,7 @@ void do_more(FILE *fp)
       		num_of_lines++;
       		n++;
 	      	if (num_of_lines == PAGELEN){
-		 	rv = get_input(fp_tty, n, total_noOfLines);
+		 	rv = get_input(fp_tty);
 			if (rv == 0) {//user pressed q
 		    		printf("\033[2K \033[1G");
 		    		break;
@@ -126,16 +127,17 @@ void do_more(FILE *fp)
 	      	}
 	}
 }
-int get_input(FILE* cmdstream, int num_of_lines, int total_noOfLines)
+int get_input(FILE* cmdstream)
 {
    	int c;
-	int percentage = (float)num_of_lines/(float)total_noOfLines*100;
+	int percentage = (float)n/(float)total_noOfLines*100;
 	printf("\033[7m --more--(%d%) \033[m", percentage);	
 	c = getc(cmdstream);
 	if(c == 'q')
 	 	return 0;
       	if ( c == ' ' )			
 	 	return 1;
+      	if ( c == '\n' )	
       	if ( c == '\n' )	
 	 	return 2;
 	if ( c == '/' ){
@@ -152,9 +154,11 @@ void search(FILE* fp)
 	int chars_read = 0;
 	int prev_offset = fseek(fp, 0, SEEK_CUR);
 	char buffer[LINELEN];
+	int temp = n;
 	fgets(str, LINELEN, stdin);
 	while(fgets(buffer, LINELEN, fp)) {
 		chars_read = strlen(buffer);
+		n++;
 		//prev_offset += chars_read;
 		if(strstr(buffer, str))
 		{
@@ -164,6 +168,7 @@ void search(FILE* fp)
 			return;
 		}
 	}
+	n = temp;
 	fseek(fp, prev_offset, SEEK_SET);
 	printf("\033[2K \033[1G \033[7m Pattern not found \033[m");
 	printf("\n");
