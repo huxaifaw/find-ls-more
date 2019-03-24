@@ -179,7 +179,7 @@ void display_stat_info(char* path, char* fname)
 	printf("%ld\t", info.st_size);
 	struct tm tmStruct;	char time_str[65];
 	localtime_r(&info.st_mtime, &tmStruct);
-	strftime(time_str, sizeof(time_str), "&b %e %H:%M", &tmStruct);
+	strftime(time_str, sizeof(time_str), "%b %e %H:%M", &tmStruct);
 	printf("%s\t", time_str);
 	printf("%s\n",fname);
 }
