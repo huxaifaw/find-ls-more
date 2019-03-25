@@ -170,6 +170,7 @@ void display_stat_info(char* path, char* fname)
 	}
 	char* mode = typesAndPermissions(info.st_mode);
 	total_block_size += info.st_blocks;
+	printf("%ld\t", info.st_ino);
 	printf("%s\t", mode);
 	printf("%ld\t", info.st_nlink);
 	char* uName = uidToUname(info.st_uid);
