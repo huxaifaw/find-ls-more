@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
@@ -19,27 +20,27 @@ int main(int argc, char* argv[]) {
 
 void myfind(char* dir, char* type, char* name)
 {
-	//printf("%s\n", dir);
-    	DIR * dp = opendir(dir);
-   	if (dp == NULL){
+	DIR * dp = opendir(dir);
+	if (dp == NULL){
       		printf("Cannot open directory:%s\n", dir);
-      		return;
+      		exit(0);
    	}
 	struct dirent* entry;
 	//errno = 0;
+	chdir(entry->d_name);
 	while((entry = readdir(dp)) != NULL) {
-		const char* dirName = dir;
-		chdir(dirName);
 		if(entry->d_type == DT_DIR && entry->d_name[0] != '.' )
 		{
 			char path[1024];
 			strcpy(path, dir);
 			strcat(path,"/");
 			strcat(path, entry->d_name);
+			//printf("PATH: %s\n", path);
 			myfind(path, type, name);
 		}
-		if(!strcmp(entry->d_name, name))
-			printf("%s/%s\n", dir, entry->d_name);	
+		if(!strcmp(entry->d_name, name)){
+			printf("%s/%s\n", dir, entry->d_name);
+		}	
 	}
-//	closedir(dp);
+	return;
 }
