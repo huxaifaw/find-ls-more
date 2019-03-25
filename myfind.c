@@ -13,12 +13,12 @@ int main(int argc, char* argv[]) {
 	if(argc <= 3 || argc > 4) {
 		printf("Incomplete number of arguments\n");
 		exit(1);	
-	}	
+	}
 	myfind(argv[1], argv[2], argv[3]);
 	return 0;	
 }
 
-void myfind(char* dir, char* type, char* name)
+void myfind(char* dir, char* criteria, char* name)
 {
 	DIR * dp = opendir(dir);
 	if (dp == NULL){
@@ -36,11 +36,14 @@ void myfind(char* dir, char* type, char* name)
 			strcat(path,"/");
 			strcat(path, entry->d_name);
 			//printf("PATH: %s\n", path);
-			myfind(path, type, name);
+			myfind(path, criteria, name);
 		}
-		if(!strcmp(entry->d_name, name)){
+		if(!strcmp(criteria, "-name") && !strcmp(entry->d_name, name))
 			printf("%s/%s\n", dir, entry->d_name);
+		else if (!strcmp(criteria, "-type"))
+		{	
 		}	
 	}
+	closedir(dp);
 	return;
 }
