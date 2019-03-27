@@ -41,7 +41,22 @@ void myfind(char* dir, char* criteria, char* name)
 		if(!strcmp(criteria, "-name") && !strcmp(entry->d_name, name))
 			printf("%s/%s\n", dir, entry->d_name);
 		else if (!strcmp(criteria, "-type"))
-		{	
+		{
+			if(!strcmp(name, "f") && entry->d_type == DT_FIFO)
+				printf("%s/%s\n", dir, entry->d_name);
+			else if(!strcmp(name, "d") && entry->d_type == DT_DIR)
+				printf("%s/%s\n", dir, entry->d_name);
+			else if(!strcmp(name, "b") && entry->d_type == DT_BLK)
+				printf("%s/%s\n", dir, entry->d_name);
+			else if(!strcmp(name, "c") && entry->d_type == DT_CHR)
+				printf("%s/%s\n", dir, entry->d_name);
+			else if(!strcmp(name, "p") && entry->d_type == DT_FIFO)
+				printf("%s/%s\n", dir, entry->d_name);
+			else if(!strcmp(name, "l") && entry->d_type == DT_LNK)
+				printf("%s/%s\n", dir, entry->d_name);
+			else if(!strcmp(name, "s") && entry->d_type == DT_SOCK)
+				printf("%s/%s\n", dir, entry->d_name);
+
 		}	
 	}
 	closedir(dp);
