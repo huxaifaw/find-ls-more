@@ -19,13 +19,15 @@ int total_block_size = 0;
 void display_stat_info(char*, char*);
 int main(int argc, char* argv[])
 {
-	if(argc==1)
+	if(argc==1){
+		printf("Directory listing of pwd:\n");
 		do_ls(".");
+	}
 	else {
 		int i = 0;
 		while(++i < argc)
 		{
-			printf("Directory listing of &s:\n", argv[i]);
+			printf("Directory listing of %s:\n", argv[i]);
 			do_ls(argv[i]);
 		}
 	}
@@ -70,6 +72,7 @@ void do_ls(char* dir)
 		}
 	}
 	qsort(names, numOfNames, sizeof(char*), cstring_cmp);
+	printf("\n");
 	for(int j = 0; j<numOfNames; j++) {
 		char path[500];
 		strcpy(path, dir);
@@ -77,8 +80,7 @@ void do_ls(char* dir)
 		strcat(path, names[j]);
 		display_stat_info(path, names[j]);
 	}
-
-	printf("total %d\n", total_block_size/2);
+	printf("\033[%dA\033[0Gtotal %d\033[G\033[%dB\n",numOfNames+1, total_block_size/2, numOfNames+1);
    	closedir(dp);
 }
 char* uidToUname(int uid)
